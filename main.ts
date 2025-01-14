@@ -29,31 +29,41 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 	}
 
 	async onload() {
+		//region Load settings
 		await this.loadSettings();
+		//endregion
 		// This creates an icon in the left ribbon.
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
+		//region Add setting tabs
 		this.addSettingTab(new WolframJsSettingsTab(this.app, this));
+		//endregion
+
+		//<editor-fold desc="Register custom Icon">
 		addIcon(WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG)
-		this.addRibbonIcon(WOLFRAMJS_ICON_ID, "Open Wolframjs", async () => {
-			await this.activeView()
-		})
+		//</editor-fold>
 
+		//TODO add ribbon button to quick open wolfram view in root workspace
+		// this.addRibbonIcon(WOLFRAMJS_ICON_ID, "Open Wolframjs", async () => {
+		// 	await this.activeView()
+		// })
+
+		// register wolfram view
 		this.registerView(WOLFRAMJS_VIEW_TYPE, (leaf) => new WolframJsView(leaf, this, this.DEFAULT_SETTTINGS))
-		this.addCommand({
-			id: 'wolframjs-open-view',
-			name: "Open wolfram js view",
-			callback: () => this.activeView()
-		})
-
-		this.addRibbonIcon("shell", "Switch file to Wolfram view", async () => {
-			await this.switchToWolframView()
-		})
+		// this.addCommand({
+		// 	id: 'wolframjs-open-view',
+		// 	name: "Open wolfram js view",
+		// 	callback: () => this.activeView()
+		// })
+		//
+		// this.addRibbonIcon("shell", "Switch file to Wolfram view", async () => {
+		// 	await this.switchToWolframView()
+		// })
 		this.registerFileMenu()
 
 
 	}
 
+	//region Add some option to the menu of normal markdown view
 	registerFileMenu() {
 		this.registerEvent(this.app.workspace.on('file-menu', (menu,
 															   file,
@@ -74,7 +84,9 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 			}
 		}))
 	}
+	//endregion
 
+	//region Function that handler to switch to WolframView of current file
 	async switchToWolframView() {
 		const leaf = this.app.workspace.getLeaf(false)
 		// console.log(leaf.getViewState())
@@ -102,6 +114,7 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 
 	}
+	//endregion
 
 
 	async activeView() {
