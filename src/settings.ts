@@ -3,9 +3,6 @@ import ObsidianWolframJsPlugin from "../main";
 
 export type WolframJsSettings = {
 	root_address:string;
-	path?:string;
-	default_home_dir?:string,
-	vault_path?:string;
 }
 
 
