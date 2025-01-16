@@ -22,6 +22,7 @@ export const WOLFRAMJS_VIEW_TYPE = "wolframjs-view"
 export default class WolframJsItemView extends TextFileView {
 	iframe: HTMLIFrameElement | null;
 
+
 	constructor(leaf: WorkspaceLeaf,
 				public plugin: ObsidianWolframJsPlugin,
 	) {
@@ -64,11 +65,11 @@ export default class WolframJsItemView extends TextFileView {
 		const leaf = this.app.workspace.getLeaf(false)
 
 		if (file != null) {
-			// await leaf.setViewState({
-			// 	type: "markdown",
-			// 	state: leaf.view.getState()
-			// })
-			await leaf.openFile(file)
+			await leaf.setViewState({
+				type: "markdown",
+				state: leaf.view.getState()
+			})
+			// await leaf.openFile(file)
 		}
 	}
 
@@ -109,6 +110,7 @@ export default class WolframJsItemView extends TextFileView {
 			this.iframe.win.addEventListener('message', this.eventListener)
 
 
+
 		}
 	}
 
@@ -117,7 +119,7 @@ export default class WolframJsItemView extends TextFileView {
 	}
 
 
-	async onOpen() {
+	async onload() {
 		super.onload();
 		const container = this.containerEl.children[1];
 		// console.log(this.file)
@@ -131,7 +133,11 @@ export default class WolframJsItemView extends TextFileView {
 
 		}
 
-		// this.addAction(WOLFRAMJS_ICON_ID,"Switch to normal mode",async ()=> await this.switchToNormalMode())
+		this.addAction(WOLFRAMJS_ICON_ID,"Switch back to text mode",()=>{
+			this.switchToNormalMode()
+		})
+
+
 
 	}
 
