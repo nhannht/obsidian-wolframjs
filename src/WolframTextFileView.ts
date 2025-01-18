@@ -16,10 +16,10 @@ import {WOLFRAMJS_ICON_ID} from "./icon";
 // import {WolframJSSaveFileDialog} from "./SaveFileDialog";
 import * as ct from "electron"
 
-export const WOLFRAMJS_VIEW_TYPE = "wolframjs-view"
+export const WOLFRAMJS_TEXT_FILE_VIEW_TYPE = "wolframjs-text-file-view"
 
 
-export default class WolframJsItemView extends TextFileView {
+export default class WolframTextFileView extends TextFileView {
 	iframe: HTMLIFrameElement | null;
 
 
@@ -32,7 +32,7 @@ export default class WolframJsItemView extends TextFileView {
 	}
 
 	getViewType(): string {
-		return WOLFRAMJS_VIEW_TYPE;
+		return WOLFRAMJS_TEXT_FILE_VIEW_TYPE;
 	}
 
 	getDisplayText(): string {

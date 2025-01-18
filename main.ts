@@ -11,10 +11,11 @@ import {
 	Setting,
 	TFile, ViewState, WorkspaceLeaf
 } from 'obsidian';
-import WolframJsItemView, {WOLFRAMJS_VIEW_TYPE} from "./src/WolframJsItemView";
+import WolframTextFileView, {WOLFRAMJS_TEXT_FILE_VIEW_TYPE} from "./src/WolframTextFileView";
 import {WolframJsSettings, WolframJsSettingsTab} from "./src/settings";
 import {WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG} from "./src/icon";
 import * as path from "path";
+import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./src/WolframJSItemView";
 
 // Remember to rename these classes and interfaces!
 
@@ -45,8 +46,9 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		// })
 
 		// register wolfram view
-		this.registerView(WOLFRAMJS_VIEW_TYPE, (leaf) => new WolframJsItemView(leaf, this))
-		this.registerExtensions(['wl', 'nb', 'wls', 'm', 'wln'], WOLFRAMJS_VIEW_TYPE)
+		this.registerView(WOLFRAMJS_TEXT_FILE_VIEW_TYPE, (leaf) => new WolframTextFileView(leaf, this))
+		this.registerView(WOLFRAMJS_ITEM_VIEW_TYPE,(leaf)=> new WolframJSItemView(leaf,this))
+		this.registerExtensions(['wl', 'nb', 'wls', 'm', 'wln'], WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
 		// this.addCommand({
 		// 	id: 'wolframjs-open-view',
 		// 	name: "Open wolfram js view",
@@ -58,6 +60,12 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		// })
 		this.registerFileMenu()
 		// this.registerActions()
+		this.addRibbonIcon("shell","this button do nothing",()=>{
+			const currentLeaf = this.app.workspace.getActiveViewOfType(MarkdownView)
+			if (currentLeaf){
+				console.log(currentLeaf.getState())
+			}
+		})
 
 
 	}
@@ -71,15 +79,23 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 			let currentViewState = leaf?.view
 			// console.log(currentViewState?.getState())
 			if (currentViewState instanceof MarkdownView) {
-				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView)
 				menu.addItem((item) => {
 					item
 						.setTitle("Switch to WolframJs mode")
 						.setIcon(WOLFRAMJS_ICON_ID)
 						.onClick(async () => {
-							if (activeView) {
-								await this.switchToWolframView(activeView.leaf)
+							const newLeaf = this.app.workspace.getLeaf(false)
+
+							const currentFile = this.app.workspace.getActiveFile()
+							const wolframItemView = new WolframJSItemView(newLeaf,this)
+							if (currentFile instanceof  TFile){
+								wolframItemView.config = {
+									serverAddress: this.settings.root_address,
+									originalFilePath: currentFile.path,
+								}
 							}
+							await newLeaf.open(wolframItemView)
+							// await this.switchToWolframView(activeView.leaf)
 						})
 				})
 			}
@@ -107,7 +123,7 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 	async switchToWolframView(leaf: WorkspaceLeaf) {
 		// console.log(leaf.getViewState())
 		await leaf.setViewState({
-			type: WOLFRAMJS_VIEW_TYPE,
+			type: WOLFRAMJS_TEXT_FILE_VIEW_TYPE,
 			state: leaf.view.getState(),
 		} as ViewState)
 	}
@@ -116,7 +132,7 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 
 	onunload() {
-		this.app.workspace.detachLeavesOfType(WOLFRAMJS_VIEW_TYPE)
+		this.app.workspace.detachLeavesOfType(WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
 	}
 
 	async loadSettings() {
