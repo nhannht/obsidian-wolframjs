@@ -48,7 +48,7 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		// register wolfram view
 		this.registerView(WOLFRAMJS_TEXT_FILE_VIEW_TYPE, (leaf) => new WolframTextFileView(leaf, this))
 		this.registerView(WOLFRAMJS_ITEM_VIEW_TYPE,(leaf)=> new WolframJSItemView(leaf,this))
-		this.registerExtensions(['wl', 'nb', 'wls', 'm', 'wln'], WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
+		this.registerExtensions(['wl', 'wln'], WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
 		// this.addCommand({
 		// 	id: 'wolframjs-open-view',
 		// 	name: "Open wolfram js view",

@@ -3,12 +3,13 @@ import ObsidianWolframJsPlugin from "../main";
 import {WOLFRAMJS_ICON_ID} from "./icon";
 import * as path from "path";
 import * as ct from "electron";
+import {Abort, ChooseKernel, ClearOutputs, DeleteFocusedCell, SaveAs, ToggleFocusedCell} from "./Action";
 
 
 export const WOLFRAMJS_ITEM_VIEW_TYPE = "wolframjs-item-view"
 export type WolframjsItemViewConfig = {
 	serverAddress: string,
-	originalFilePath: string
+	originalFilePath: string|null
 }
 export default class WolframJSItemView extends ItemView {
 	iframe: HTMLIFrameElement | null
@@ -54,11 +55,11 @@ export default class WolframJSItemView extends ItemView {
 		this.iframe.setAttribute('sandbox', 'allow-forms allow-presentation allow-same-origin allow-scripts')
 		const vault_path = (this.app.vault.adapter as FileSystemAdapter).getBasePath()
 		// console.log(vault_path)
-		const file = this.config.originalFilePath
+		const file = this.config.originalFilePath ? this.config.originalFilePath : ""
 		const fileAbsPath = path.resolve(vault_path, file)
 		const url = new URL(path.join("/iframe/", fileAbsPath), this.plugin.settings.root_address)
 		this.iframe.src = url.toString()
-		this.iframe.win.addEventListener('message', this.eventListener)
+		// this.iframe.win.addEventListener('message', this.eventListener)
 	}
 
 	eventListener = async (event: MessageEvent) => {
@@ -69,8 +70,8 @@ export default class WolframJSItemView extends ItemView {
 			if (result.filePath) {
 				const fileExt = result.filePath.split(".").pop()
 				let filePath = result.filePath
-				if (fileExt && fileExt === "wln"){
-					filePath= result.filePath.slice(0, -(fileExt.length+1))
+				if (fileExt && fileExt === "wln") {
+					filePath = result.filePath.slice(0, -(fileExt.length + 1))
 
 				}
 				const message = {
@@ -86,17 +87,19 @@ export default class WolframJSItemView extends ItemView {
 
 
 	private async switchToNormalMode() {
-		const file = this.app.vault.getFileByPath(this.config.originalFilePath)
-		const wolframCurrentLeaf = this.app.workspace.getActiveViewOfType(WolframJSItemView)
-		if (wolframCurrentLeaf instanceof WolframJSItemView) {
+		if (this.config.originalFilePath != null) {
+			const file = this.app.vault.getFileByPath(this.config.originalFilePath)
+			const wolframCurrentLeaf = this.app.workspace.getActiveViewOfType(WolframJSItemView)
+			if (wolframCurrentLeaf instanceof WolframJSItemView) {
 
-		}
+			}
 
-		if (file instanceof TFile) {
-			const leaf = this.app.workspace.getLeaf(false)
-			await leaf.openFile(file,{active:false})
-			this.app.workspace.detachLeavesOfType(WOLFRAMJS_ITEM_VIEW_TYPE)
+			if (file instanceof TFile) {
+				const leaf = this.app.workspace.getLeaf(false)
+				await leaf.openFile(file)
+				// this.app.workspace.detachLeavesOfType(WOLFRAMJS_ITEM_VIEW_TYPE)
 
+			}
 		}
 
 
@@ -114,15 +117,24 @@ export default class WolframJSItemView extends ItemView {
 
 		}
 
-		this.addAction(WOLFRAMJS_ICON_ID, "Switch back to text mode", () => {
-			this.switchToNormalMode()
-		})
+
+		this.addAction("save-all", "Save as Wln file",()=> SaveAs(this.iframe))
+		this.addAction("cpu","Pick kernel",()=>ChooseKernel(this.iframe))
+		this.addAction("circle-stop","Abort", ()=>Abort(this.iframe))
+		this.addAction("list-x","Clear output",()=>ClearOutputs(this.iframe))
+		this.addAction("toggle-left","Toggle focus cell",()=>ToggleFocusedCell(this.iframe))
+		this.addAction("eraser","Delete focus cell",()=> DeleteFocusedCell(this.iframe))
+		this.addAction("arrow-left",
+			"Go back to the original markdown file - remember to save the changed",
+			()=> this.switchToNormalMode())
 
 	}
+
+
 	async onClose() {
 		// await super.onClose()
-		if (this.iframe){
-			this.iframe.win.removeEventListener("message",this.eventListener)
+		if (this.iframe) {
+			this.iframe.win.removeEventListener("message", this.eventListener)
 		}
 
 	}
