@@ -117,7 +117,17 @@ export default class WolframJSItemView extends ItemView {
 
 		}
 
+		await this.registerActionButtons()
 
+
+
+
+
+
+
+	}
+
+	async registerActionButtons(){
 		this.addAction("save-all", "Save as Wln file",()=> SaveAs(this.iframe))
 		this.addAction("cpu","Pick kernel",()=>ChooseKernel(this.iframe))
 		this.addAction("circle-stop","Abort", ()=>Abort(this.iframe))
@@ -127,7 +137,6 @@ export default class WolframJSItemView extends ItemView {
 		this.addAction("arrow-left",
 			"Go back to the original markdown file - remember to save the changed",
 			()=> this.switchToNormalMode())
-
 	}
 
 

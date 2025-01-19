@@ -15,6 +15,7 @@ import * as path from "path";
 import {WOLFRAMJS_ICON_ID} from "./icon";
 // import {WolframJSSaveFileDialog} from "./SaveFileDialog";
 import * as ct from "electron"
+import {Abort, ChooseKernel, ClearOutputs, DeleteFocusedCell, Save, SaveAs, ToggleFocusedCell} from "./Action";
 
 export const WOLFRAMJS_TEXT_FILE_VIEW_TYPE = "wolframjs-text-file-view"
 
@@ -43,21 +44,39 @@ export default class WolframTextFileView extends TextFileView {
 		}
 	}
 
+	async registerActionButtons() {
+		if (this.file) {
+			if (this.file.extension === "wln") {
+				this.addAction("cpu", "Pick kernel", () => ChooseKernel(this.iframe))
+				this.addAction("circle-stop", "Abort", () => Abort(this.iframe))
+				this.addAction("list-x", "Clear output", () => ClearOutputs(this.iframe))
 
-	onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string) {
-		if (source !== 'more-options') {
-			super.onPaneMenu(menu, source);
-			return;
+			}
+			this.addAction("save-all", "Save as", () => SaveAs(this.iframe))
+			this.addAction("save", "Save",()=>Save(this.iframe))
+			this.addAction("toggle-left", "Toggle focus cell", () => ToggleFocusedCell(this.iframe))
+			this.addAction("eraser", "Delete focus cell", () => DeleteFocusedCell(this.iframe))
+			this.addAction("arrow-left",
+				"Go back to the original markdown file - remember to save the changed",
+				() => this.switchToNormalMode())
 		}
-		menu.addItem((item) => {
-			item.setTitle("Switch back to normal mode")
-				.setIcon(WOLFRAMJS_ICON_ID)
-				.setSection("pane")
-				.onClick(async () => {
-					await this.switchToNormalMode();
-				})
-		})
 	}
+
+
+	// onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string) {
+	// 	if (source !== 'more-options') {
+	// 		super.onPaneMenu(menu, source);
+	// 		return;
+	// 	}
+	// 	menu.addItem((item) => {
+	// 		item.setTitle("Switch back to normal mode")
+	// 			.setIcon(WOLFRAMJS_ICON_ID)
+	// 			.setSection("pane")
+	// 			.onClick(async () => {
+	// 				await this.switchToNormalMode();
+	// 			})
+	// 	})
+	// }
 
 	private async switchToNormalMode() {
 		const file = this.file
@@ -73,28 +92,28 @@ export default class WolframTextFileView extends TextFileView {
 		}
 	}
 
-	eventListener = async (event: MessageEvent) => {
-		if (event.data.type === 'request') {
-			const result = await ct.remote.dialog.showSaveDialog({})
-			const uuid = event.data.promise
-
-			if (result.filePath) {
-				const fileExt = result.filePath.split(".").pop()
-				let filePath = result.filePath
-				if (fileExt && fileExt === "wln"){
-					filePath= result.filePath.slice(0, -(fileExt.length+1))
-
-				}
-				const message = {
-					'type': 'promise',
-					'promise': uuid,
-					'data': encodeURIComponent(filePath)
-				}
-				// console.log(message)
-				this.iframe?.contentWindow?.postMessage(message, "*")
-			}
-		}
-	}
+	// eventListener = async (event: MessageEvent) => {
+	// 	if (event.data.type === 'request') {
+	// 		const result = await ct.remote.dialog.showSaveDialog({})
+	// 		const uuid = event.data.promise
+	//
+	// 		if (result.filePath) {
+	// 			const fileExt = result.filePath.split(".").pop()
+	// 			let filePath = result.filePath
+	// 			if (fileExt && fileExt === "wln") {
+	// 				filePath = result.filePath.slice(0, -(fileExt.length + 1))
+	//
+	// 			}
+	// 			const message = {
+	// 				'type': 'promise',
+	// 				'promise': uuid,
+	// 				'data': encodeURIComponent(filePath)
+	// 			}
+	// 			// console.log(message)
+	// 			this.iframe?.contentWindow?.postMessage(message, "*")
+	// 		}
+	// 	}
+	// }
 
 
 	loadIframe(container: Element) {
@@ -107,8 +126,7 @@ export default class WolframTextFileView extends TextFileView {
 			const fileAbsPath = path.resolve(vault_path, file.path)
 			const url = new URL(path.join("/iframe/", fileAbsPath), this.plugin.settings.root_address)
 			this.iframe.src = url.toString()
-			this.iframe.win.addEventListener('message', this.eventListener)
-
+			// this.iframe.win.addEventListener('message', this.eventListener)
 
 
 		}
@@ -133,10 +151,11 @@ export default class WolframTextFileView extends TextFileView {
 
 		}
 
-		this.addAction(WOLFRAMJS_ICON_ID,"Switch back to text mode",()=>{
-			this.switchToNormalMode()
-		})
 
+
+		setTimeout(async ()=>{
+			await this.registerActionButtons()
+		},100)
 
 
 	}
@@ -144,9 +163,9 @@ export default class WolframTextFileView extends TextFileView {
 
 	async onClose() {
 		// await super.onClose()
-		if (this.iframe){
-			this.iframe.win.removeEventListener("message",this.eventListener)
-		}
+		// if (this.iframe) {
+		// 	this.iframe.win.removeEventListener("message", this.eventListener)
+		// }
 
 	}
 

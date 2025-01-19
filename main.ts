@@ -40,24 +40,13 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		addIcon(WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG)
 		//</editor-fold>
 
-		//TODO add ribbon button to quick open wolfram view in root workspace
-		// this.addRibbonIcon(WOLFRAMJS_ICON_ID, "Open Wolframjs", async () => {
-		// 	await this.activeView()
-		// })
+
 
 		// register wolfram view
 		this.registerView(WOLFRAMJS_TEXT_FILE_VIEW_TYPE, (leaf) => new WolframTextFileView(leaf, this))
 		this.registerView(WOLFRAMJS_ITEM_VIEW_TYPE,(leaf)=> new WolframJSItemView(leaf,this))
 		this.registerExtensions(['wl', 'wln'], WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
-		// this.addCommand({
-		// 	id: 'wolframjs-open-view',
-		// 	name: "Open wolfram js view",
-		// 	callback: () => this.activeView()
-		// })
-		//
-		// this.addRibbonIcon("shell", "Switch file to Wolfram view", async () => {
-		// 	await this.switchToWolframView()
-		// })
+
 		this.registerFileMenu()
 		// this.registerActions()
 		this.addRibbonIcon("shell","this button do nothing",()=>{
@@ -102,20 +91,6 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		}))
 	}
 
-	//TODO: registering a button to switch to wolfram view
-	registerActions() {
-		this.app.workspace.on("file-open", (file) => {
-			const view = this.app.workspace.getActiveViewOfType(MarkdownView)
-			if (view) {
-				view.addAction(WOLFRAMJS_ICON_ID, "hello world", () => {
-					console.log("hello")
-				})
-
-			}
-		})
-
-
-	}
 
 	//endregion
 
