@@ -123,7 +123,7 @@ export default class WolframJSItemView extends ItemView {
 			const originalFile = this.app.vault.getFileByPath(this.config.originalFilePath)
 			if (originalFile instanceof TFile) {
 				const ext = originalFile.extension
-				console.log(ext)
+				// console.log(ext)
 				// markdown  and nb file can eval but cannot save directly, save via saveas
 				// wl can save directly, can edit but impossible to eval
 				// wln can do anything
@@ -137,7 +137,7 @@ export default class WolframJSItemView extends ItemView {
 					this.actionButtons["Pick kernel"] = this.addAction("cpu", "Pick kernel", () => ChooseKernel(this.iframe))
 
 				}
-				if (ext != "md") {
+				if (ext !== "md" && ext !== 'nb') {
 					this.actionButtons["Save"] =  this.addAction("save", "Save", () => Save(this.iframe))
 
 				}
