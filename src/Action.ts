@@ -9,7 +9,7 @@ export const SaveAs = async (iframe:HTMLIFrameElement|null) => {
 	const result = await ct.remote.dialog.showSaveDialog({
 		title: "Pick a wln file where you want to save",
 		properties: [
-			"showHiddenFiles",
+			// "showHiddenFiles",
 			"createDirectory"
 		],
 		filters: [

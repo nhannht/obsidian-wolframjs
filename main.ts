@@ -56,8 +56,19 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 			}
 		})
 
-
 	}
+
+	async addView(view:WolframTextFileView,plugin:ObsidianWolframJsPlugin,data:string){
+		const file = view.file
+		console.log("In add view")
+		console.log(file)
+		if (file){
+			const leaf = this.app.workspace.getLeaf(true)
+			await leaf.openFile(file)
+		}
+	}
+
+
 
 	//region Add some option to the menu of normal markdown view
 	registerFileMenu() {
@@ -84,6 +95,11 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 								}
 							}
 							await newLeaf.open(wolframItemView)
+							await newLeaf.setViewState({
+								type: WOLFRAMJS_ITEM_VIEW_TYPE,
+								active: true
+							})
+							// this.app.workspace.revealLeaf(newLeaf)
 							// await this.switchToWolframView(activeView.leaf)
 						})
 				})

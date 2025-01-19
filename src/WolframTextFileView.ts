@@ -6,29 +6,65 @@ import {
 	MarkdownView,
 	Menu,
 	TextFileView,
-	TFile,
+	TFile, ViewStateResult,
 	WorkspaceLeaf
 } from "obsidian";
 import ObsidianWolframJsPlugin from "../main";
 import {WolframJsSettings} from "./settings";
 import * as path from "path";
 import {WOLFRAMJS_ICON_ID} from "./icon";
-// import {WolframJSSaveFileDialog} from "./SaveFileDialog";
 import * as ct from "electron"
 import {Abort, ChooseKernel, ClearOutputs, DeleteFocusedCell, Save, SaveAs, ToggleFocusedCell} from "./Action";
+import {EditorView} from "@codemirror/view";
+import {EditorState, Extension} from "@codemirror/state";
+import {history} from "@codemirror/commands"
+import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./WolframJSItemView";
 
 export const WOLFRAMJS_TEXT_FILE_VIEW_TYPE = "wolframjs-text-file-view"
 
 
 export default class WolframTextFileView extends TextFileView {
 	iframe: HTMLIFrameElement | null;
+	codeMirror: EditorView;
+	extensions: Extension[];
+	actionButtons :Record<string,HTMLElement>
 
 
 	constructor(leaf: WorkspaceLeaf,
 				public plugin: ObsidianWolframJsPlugin,
 	) {
 		super(leaf);
+		this.codeMirror = new EditorView({
+			parent: this.contentEl
+		})
+		this.actionButtons = {}
+		this.extensions = [
+			EditorView.lineWrapping,
+			EditorView.editorAttributes.of({class: "orgmode-view"}),
+			EditorView.editorAttributes.of({class: "mod-cm6"}),
+			EditorView.baseTheme({
+				".cm-gutters": {
+					backgroundColor: "unset !important",
+					border: "unset !important",
+				},
+				".open-fold-icon": {
+					opacity: "0",
+				},
+				".open-fold-icon:hover": {
+					opacity: "1",
+				},
+				".cm-panels": {
+					backgroundColor: "#2e2e2e",
+				},
+			}),
+			EditorView.updateListener.of((v) => {
+				if (v.docChanged) {
+					this.requestSave()
 
+				}
+			})
+
+		]
 
 	}
 
@@ -38,32 +74,49 @@ export default class WolframTextFileView extends TextFileView {
 
 	getDisplayText(): string {
 		if (this.file) {
-			return this.file.basename;
+			return this.file.path;
 		} else {
 			return "Wolframjs"
 		}
 	}
 
+	async switchToWolframView() {
+		const newLeaf = this.app.workspace.getLeaf(false)
+
+		const wolframItemView = new WolframJSItemView(newLeaf,this.plugin)
+		if (this.file instanceof  TFile){
+			wolframItemView.config = {
+				serverAddress: this.plugin.settings.root_address,
+				originalFilePath: this.file.path,
+			}
+		}
+		await newLeaf.open(wolframItemView)
+		await newLeaf.setViewState({
+			type: WOLFRAMJS_ITEM_VIEW_TYPE,
+			active: true
+		})
+
+	}
+
 	async registerActionButtons() {
 		if (this.file) {
-			if (this.file.extension === "wln") {
-				this.addAction("cpu", "Pick kernel", () => ChooseKernel(this.iframe))
-				this.addAction("circle-stop", "Abort", () => Abort(this.iframe))
-				this.addAction("list-x", "Clear output", () => ClearOutputs(this.iframe))
-
-			}
-			this.addAction("save-all", "Save as", () => SaveAs(this.iframe))
-			this.addAction("save", "Save",()=>Save(this.iframe))
-			this.addAction("toggle-left", "Toggle focus cell", () => ToggleFocusedCell(this.iframe))
-			this.addAction("eraser", "Delete focus cell", () => DeleteFocusedCell(this.iframe))
-			this.addAction("arrow-left",
-				"Go back to the original markdown file - remember to save the changed",
-				() => this.switchToNormalMode())
+			this.actionButtons["Switch to wolfram view"] = this.addAction(WOLFRAMJS_ICON_ID, "Switch to WolframJs mode", async () => {
+				await this.switchToWolframView()
+			})
 		}
 	}
 
 
-	// onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string) {
+	async onLoadFile(file: TFile) {
+		await super.onLoadFile(file)
+
+		await this.registerActionButtons()
+		// console.log(this.iframe?.src)
+
+
+	}
+
+// onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string) {
 	// 	if (source !== 'more-options') {
 	// 		super.onPaneMenu(menu, source);
 	// 		return;
@@ -78,104 +131,64 @@ export default class WolframTextFileView extends TextFileView {
 	// 	})
 	// }
 
-	private async switchToNormalMode() {
-		const file = this.file
-		// console.log(file)
-		const leaf = this.app.workspace.getLeaf(false)
 
-		if (file != null) {
-			await leaf.setViewState({
-				type: "markdown",
-				state: leaf.view.getState()
-			})
-			// await leaf.openFile(file)
-		}
-	}
-
-	// eventListener = async (event: MessageEvent) => {
-	// 	if (event.data.type === 'request') {
-	// 		const result = await ct.remote.dialog.showSaveDialog({})
-	// 		const uuid = event.data.promise
-	//
-	// 		if (result.filePath) {
-	// 			const fileExt = result.filePath.split(".").pop()
-	// 			let filePath = result.filePath
-	// 			if (fileExt && fileExt === "wln") {
-	// 				filePath = result.filePath.slice(0, -(fileExt.length + 1))
-	//
-	// 			}
-	// 			const message = {
-	// 				'type': 'promise',
-	// 				'promise': uuid,
-	// 				'data': encodeURIComponent(filePath)
-	// 			}
-	// 			// console.log(message)
-	// 			this.iframe?.contentWindow?.postMessage(message, "*")
-	// 		}
-	// 	}
-	// }
-
-
-	loadIframe(container: Element) {
-		this.iframe = container.createEl('iframe');
-		this.iframe.setAttribute('sandbox', 'allow-forms allow-presentation allow-same-origin allow-scripts')
-		const vault_path = (this.app.vault.adapter as FileSystemAdapter).getBasePath()
-		// console.log(vault_path)
-		const file = this.file
-		if (file instanceof TFile) {
-			const fileAbsPath = path.resolve(vault_path, file.path)
-			const url = new URL(path.join("/iframe/", fileAbsPath), this.plugin.settings.root_address)
-			this.iframe.src = url.toString()
-			// this.iframe.win.addEventListener('message', this.eventListener)
-
-
-		}
-	}
 
 	getIcon(): IconName {
 		return WOLFRAMJS_ICON_ID;
 	}
 
 
-	async onload() {
-		super.onload();
-		const container = this.containerEl.children[1];
-		// console.log(this.file)
-		try {
-			setTimeout(() => this.loadIframe(container), 100)
+	clear(): void {
+		// console.log("clear")
+		Object.entries(this.actionButtons).forEach(([k,v])=>{
+			v.remove()
+
+		})
+		this.actionButtons = {}
 
 
-		} catch (e) {
-			console.error(e);
-			const error = container.createDiv({text: e.toString()})
+	}
+
+
+	protected  async  onClose() {
+
+	}
+
+	canAcceptExtension(extension: string): boolean {
+		return (["wln", "wl"].includes(extension))
+	}
+
+
+	getViewData() {
+
+
+		return this.codeMirror.state.doc.toString()
+
+
+	}
+
+	getState(): Record<string, unknown> {
+		// console.log("Get state")
+		return {
+			type: WOLFRAMJS_TEXT_FILE_VIEW_TYPE,
 
 		}
-
-
-
-		setTimeout(async ()=>{
-			await this.registerActionButtons()
-		},100)
-
-
 	}
 
-
-	async onClose() {
-		// await super.onClose()
-		// if (this.iframe) {
-		// 	this.iframe.win.removeEventListener("message", this.eventListener)
-		// }
-
+	setState(state: any, result: ViewStateResult): Promise<void> {
+		return super.setState(state, result);
 	}
 
-	clear(): void {
-	}
-
-	getViewData(): string {
-		return ""
-	}
 
 	setViewData(data: string, clear: boolean): void {
+		// console.log("Set view data")
+		// this.plugin.addView(this,this.plugin,data).then()
+		if (clear){
+			this.clear()
+		}
+		this.codeMirror.setState(EditorState.create({
+			doc: data,
+			extensions: this.extensions,
+		}))
 	}
 }
