@@ -1,4 +1,4 @@
-import {addIcon, MarkdownView, Plugin, TFile} from 'obsidian';
+import {addIcon, MarkdownView, Plugin, TFile, View} from 'obsidian';
 import WolframTextFileView, {WOLFRAMJS_TEXT_FILE_VIEW_TYPE} from "./src/WolframTextFileView";
 import {WolframJsSettings, WolframJsSettingsTab} from "./src/settings";
 import {WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG} from "./src/icon";
@@ -44,7 +44,8 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 		// register wolfram view
 		this.registerView(WOLFRAMJS_TEXT_FILE_VIEW_TYPE, (leaf) => new WolframTextFileView(leaf, this))
-		this.registerView(WOLFRAMJS_ITEM_VIEW_TYPE, (leaf) => new WolframJSItemView(leaf, this))
+		// @ts-ignore
+		this.registerView(WOLFRAMJS_ITEM_VIEW_TYPE, (leaf) => new WolframJSItemView(leaf, this, ""))
 		// wolframjs currently supprot wln,wl,nb but not m or wls
 		this.registerExtensions(['wl', 'wln', "nb"], WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
 
@@ -92,19 +93,19 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		const newLeaf = this.app.workspace.getLeaf(false)
 
 		const currentFile = this.app.workspace.getActiveFile()
-		const wolframItemView = new WolframJSItemView(newLeaf, this)
 		if (currentFile instanceof TFile) {
-			wolframItemView.config = {
+			let wolframItemView = new WolframJSItemView(newLeaf, this)
+			await wolframItemView.setState({
 				serverAddress: this.settings.root_address,
-				originalFilePath: currentFile.path,
-			}
+				originalFilePath: currentFile.path
+			},{
+				history: true
+			})
+
+			await newLeaf.open(wolframItemView as unknown as View)
+
 		}
-		await newLeaf.open(wolframItemView)
-		await newLeaf.setViewState({
-			type: WOLFRAMJS_ITEM_VIEW_TYPE,
-			active: true
-		})
-		// this.app.workspace.revealLeaf(newLeaf)
+		// await this.app.workspace.vi(newLeaf)
 		// await this.switchToWolframView(activeView.leaf)
 	}
 
