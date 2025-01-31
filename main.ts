@@ -7,7 +7,7 @@ import {
 	Modal,
 	Notice,
 	Plugin,
-	PluginSettingTab,
+	PluginSettingTab, request,
 	Setting,
 	TFile, View, ViewState, WorkspaceLeaf
 } from 'obsidian';
@@ -16,20 +16,34 @@ import {WolframJsSettings, WolframJsSettingsTab} from "./src/settings";
 import {WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG} from "./src/icon";
 import * as path from "path";
 import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./src/WolframJSItemView";
-
+import BlockHelper from "./src/BlockHelper";
 // Remember to rename these classes and interfaces!
 
+export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default class ObsidianWolframJsPlugin extends Plugin {
 	settings: WolframJsSettings;
 	DEFAULT_SETTTINGS: WolframJsSettings = {
 		root_address: "http://127.0.0.1:20560",
+		extensions: "",
+		styles: []
 	}
 	wolframButton: HTMLElement | null;
+	externalJSScriptTags: HTMLScriptElement | null = null;
+	externalStyleTags: HTMLStyleElement[] = [];
+	targetKernel: string | null = null;
+	blockHelper = new BlockHelper(this)
+
 
 	async onload() {
 		//region Load settings
+		// const kernel = await this.blockHelper.findKernel();
+		// this.targetKernel = kernel;
+		// this.blockHelper.setUpServerAPI()
 		await this.loadSettings();
+		// await this.blockHelper.fetchBundleJs()
+		// await this.blockHelper.fetchStyle()
+		// await this.blockHelper.registerWoffBlock()
 		//endregion
 		// This creates an icon in the left ribbon.
 
@@ -62,7 +76,12 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		}))
 
 
+
+
+
 	}
+
+
 
 
 	//region Add some option to the menu of normal markdown view
@@ -113,6 +132,8 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
+		this.externalStyleTags.forEach(t => t.remove())
+		this.externalJSScriptTags = null
 	}
 
 	async loadSettings() {

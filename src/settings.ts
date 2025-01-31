@@ -3,7 +3,13 @@ import ObsidianWolframJsPlugin from "../main";
 
 export type WolframJsSettings = {
 	root_address:string;
+	extensions:string,
+	styles: string[]
+
+
 }
+
+
 
 
 

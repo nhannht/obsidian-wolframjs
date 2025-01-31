@@ -9,11 +9,13 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
+
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
 		"@codemirror/commands": "^6.8.0",
 		"@codemirror/state": "^6.5.1",
+		"@codemirror/view": "^6.36.2",
 		"@types/file-saver": "^2.0.7",
 		"@types/node": "^16.11.6",
 		"@types/react": "^19.0.7",
@@ -24,10 +26,10 @@
 		"esbuild": "0.17.3",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
-		"typescript": "4.7.4",
-		"@codemirror/view": "^6.36.2"
+		"typescript": "4.7.4"
 	},
 	"dependencies": {
+		"node-fetch": "^3.3.2",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0"
 	}

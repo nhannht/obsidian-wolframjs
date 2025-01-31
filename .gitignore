@@ -20,3 +20,11 @@ data.json
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
+
+*.min.js
+/1.0.3.mkv
+/1.0.3.mp4
+/Wed Jan 22 12:26:07 AM +07 2025.mkv
+/Wed Jan 22 12:26:28 AM +07 2025.mkv
+/api.http
+/api.mjs

@@ -40,7 +40,6 @@ export default class WolframTextFileView extends TextFileView {
 		this.actionButtons = {}
 		this.extensions = [
 			EditorView.lineWrapping,
-			EditorView.editorAttributes.of({class: "orgmode-view"}),
 			EditorView.editorAttributes.of({class: "mod-cm6"}),
 			EditorView.baseTheme({
 				".cm-gutters": {

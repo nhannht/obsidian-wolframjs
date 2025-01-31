@@ -13,8 +13,10 @@ div.workspace-leaf-content[data-type=wolframjs-text-file-view] iframe {
 }
 
 div.workspace-leaf-content[data-type=wolframjs-text-file-view] div.view-content {
-	overflow: hidden;
+	overflow: scroll;
 }
+
+
 
 div.workspace-leaf-content[data-type=wolframjs-item-view] iframe {
 	width: 100%;
@@ -23,5 +25,5 @@ div.workspace-leaf-content[data-type=wolframjs-item-view] iframe {
 }
 
 div.workspace-leaf-content[data-type=wolframjs-item-view] div.view-content {
-	overflow: hidden;
+	overflow: scroll;
 }
