@@ -1,22 +1,8 @@
-import {
-	addIcon,
-	App,
-	Editor,
-	FileSystemAdapter,
-	MarkdownView,
-	Modal,
-	Notice,
-	Plugin,
-	PluginSettingTab, request,
-	Setting,
-	TFile, View, ViewState, WorkspaceLeaf
-} from 'obsidian';
+import {addIcon, MarkdownView, Plugin, TFile} from 'obsidian';
 import WolframTextFileView, {WOLFRAMJS_TEXT_FILE_VIEW_TYPE} from "./src/WolframTextFileView";
 import {WolframJsSettings, WolframJsSettingsTab} from "./src/settings";
 import {WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG} from "./src/icon";
-import * as path from "path";
 import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./src/WolframJSItemView";
-import BlockHelper from "./src/BlockHelper";
 // Remember to rename these classes and interfaces!
 
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -29,13 +15,13 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		styles: []
 	}
 	wolframButton: HTMLElement | null;
-	externalJSScriptTags: HTMLScriptElement | null = null;
-	externalStyleTags: HTMLStyleElement[] = [];
 	targetKernel: string | null = null;
-	blockHelper = new BlockHelper(this)
+
+	// blockHelper = new BlockHelper(this)
 
 
 	async onload() {
+		// inlineImportDebug()
 		//region Load settings
 		// const kernel = await this.blockHelper.findKernel();
 		// this.targetKernel = kernel;
@@ -70,18 +56,13 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 				if (this.wolframButton) {
 					this.wolframButton.remove()
 				}
-				this.wolframButton = currentView.addAction(WOLFRAMJS_ICON_ID, "Test", this.switchToWolframView)
+				this.wolframButton = currentView.addAction(WOLFRAMJS_ICON_ID, "Switch to Wolfram View", this.switchToWolframView)
 
 			}
 		}))
 
 
-
-
-
 	}
-
-
 
 
 	//region Add some option to the menu of normal markdown view
@@ -132,8 +113,7 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
-		this.externalStyleTags.forEach(t => t.remove())
-		this.externalJSScriptTags = null
+
 	}
 
 	async loadSettings() {

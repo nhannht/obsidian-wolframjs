@@ -1,3 +1,4 @@
+//@ts-nocheck
 import ObsidianWolframJsPlugin, {delay} from "../main";
 import {request} from "obsidian";
 import {WolframJsSettings} from "./settings";

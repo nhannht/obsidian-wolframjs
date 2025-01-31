@@ -17,7 +17,6 @@ div.workspace-leaf-content[data-type=wolframjs-text-file-view] div.view-content 
 }
 
 
-
 div.workspace-leaf-content[data-type=wolframjs-item-view] iframe {
 	width: 100%;
 	height: 100%;
@@ -26,4 +25,11 @@ div.workspace-leaf-content[data-type=wolframjs-item-view] iframe {
 
 div.workspace-leaf-content[data-type=wolframjs-item-view] div.view-content {
 	overflow: scroll;
+}
+
+.svg-icon.wolframjs path {
+	fill: black
+}
+body.theme-dark  .svg-icon.wolframjs path {
+	fill: white
 }
