@@ -95,6 +95,7 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		const currentFile = this.app.workspace.getActiveFile()
 		if (currentFile instanceof TFile) {
 			let wolframItemView = new WolframJSItemView(newLeaf, this)
+			// I don't understand the different between View.setState and Leaf.setViewState, seem like View.setState affect data releated to view, and leaf.setState trigger change in getDisplayText
 			await wolframItemView.setState({
 				serverAddress: this.settings.root_address,
 				originalFilePath: currentFile.path
@@ -103,6 +104,15 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 			})
 
 			await newLeaf.open(wolframItemView as unknown as View)
+			await newLeaf.setViewState({
+				type: WOLFRAMJS_ITEM_VIEW_TYPE,
+				active:true,
+				state:{
+					originalFilePath: currentFile.path,
+					serverAddress: this.settings.root_address
+				}
+			})
+
 
 		}
 		// await this.app.workspace.vi(newLeaf)

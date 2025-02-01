@@ -1,5 +1,5 @@
 import {FileSystemAdapter, IconName, ItemView, TFile, ViewStateResult, WorkspaceLeaf} from "obsidian";
-import ObsidianWolframJsPlugin from "../main";
+import ObsidianWolframJsPlugin, {delay} from "../main";
 import {WOLFRAMJS_ICON_ID} from "./icon";
 import * as path from "path";
 import {Abort, ChooseKernel, ClearOutputs, DeleteFocusedCell, Save, SaveAs, ToggleFocusedCell} from "./Action";
@@ -24,18 +24,17 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 	constructor(leaf: WorkspaceLeaf,
 				public plugin: ObsidianWolframJsPlugin,
-
 	) {
 		super(leaf)
 		this.actionButtons = {}
-		this.serverAddress = this.plugin.settings.root_address
-
+		// this.serverAddress = this.plugin.settings.root_address
+		// this.originalFilePath = this.leaf.getViewState().data.originalFilePath
 
 
 	}
 
 
-	getState(): Record<string,WolframjsItemViewPersistentState> {
+	getState(): Record<string, WolframjsItemViewPersistentState> {
 		// console.log("Get state trigger")
 		return {
 			data: {
@@ -57,13 +56,13 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 		if (state.originalFilePath) {
 			this.originalFilePath = state.originalFilePath
 		} else {
-			this.originalFilePath = ""
+			this.originalFilePath = this.leaf.getViewState().data.originalFilePath
 		}
 
 		return super.setState(state, result);
 	}
 
-	getDisplayText(): string {
+	 getDisplayText() {
 		return `View ${this.originalFilePath} as WolframJS`
 	}
 
@@ -106,6 +105,7 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 
 	async onOpen() {
+		console.log(this.leaf.getViewState())
 		const container = this.containerEl.children[1];
 		// console.log(this.file)
 		try {
@@ -117,6 +117,7 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 		}
 
 		await this.registerActionButtons()
+		this.app.workspace.requestSaveLayout()
 
 
 	}
