@@ -3,6 +3,7 @@ import WolframTextFileView, {WOLFRAMJS_TEXT_FILE_VIEW_TYPE} from "./src/WolframT
 import {WolframJsSettings, WolframJsSettingsTab} from "./src/settings";
 import {WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG} from "./src/icon";
 import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./src/WolframJSItemView";
+import {switchToWolframView} from "./src/Action";
 // Remember to rename these classes and interfaces!
 
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -93,29 +94,9 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 		const newLeaf = this.app.workspace.getLeaf(false)
 
 		const currentFile = this.app.workspace.getActiveFile()
-		if (currentFile instanceof TFile) {
-			let wolframItemView = new WolframJSItemView(newLeaf, this)
-			// I don't understand the different between View.setState and Leaf.setViewState, seem like View.setState affect data releated to view, and leaf.setState trigger change in getDisplayText
-			await wolframItemView.setState({
-				serverAddress: this.settings.root_address,
-				originalFilePath: currentFile.path
-			},{
-				history: true
-			})
-
-			await newLeaf.open(wolframItemView as unknown as View)
-			await newLeaf.setViewState({
-				type: WOLFRAMJS_ITEM_VIEW_TYPE,
-				active:true,
-				state:{
-					originalFilePath: currentFile.path,
-					serverAddress: this.settings.root_address
-				}
-			})
-
-
-		}
+		await switchToWolframView(currentFile,this.settings.root_address)
 		// await this.app.workspace.vi(newLeaf)
+
 		// await this.switchToWolframView(activeView.leaf)
 	}
 

@@ -4,6 +4,7 @@ import {WOLFRAMJS_ICON_ID} from "./icon";
 import {EditorView} from "@codemirror/view";
 import {EditorState, Extension} from "@codemirror/state";
 import WolframJSItemView from "./WolframJSItemView";
+import {switchToWolframView} from "./Action";
 
 export const WOLFRAMJS_TEXT_FILE_VIEW_TYPE = "wolframjs-text-file-view"
 
@@ -64,30 +65,13 @@ export default class WolframTextFileView extends TextFileView {
 		}
 	}
 
-	async switchToWolframView() {
-		const newLeaf = this.app.workspace.getLeaf(false)
-
-		if (this.file instanceof TFile) {
-			let wolframItemView = new WolframJSItemView(newLeaf, this.plugin)
-			await wolframItemView.setState({
-				serverAddress: this.plugin.settings.root_address,
-                originalFilePath: this.file.path
-			},{
-				history:true
-			})
-
-
-			await newLeaf.open(wolframItemView as unknown as View)
-
-		}
-
-
-	}
 
 	async registerActionButtons() {
 		if (this.file) {
 			this.actionButtons["Switch to wolfram view"] = this.addAction(WOLFRAMJS_ICON_ID, "Switch to WolframJs mode", async () => {
-				await this.switchToWolframView()
+				// this.leaf.detach()
+
+				await switchToWolframView(this.file,this.plugin.settings.root_address)
 			})
 		}
 	}

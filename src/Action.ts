@@ -1,10 +1,41 @@
 import * as ct from "electron"
+import {TAbstractFile, TFile, View} from "obsidian";
+import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./WolframJSItemView";
 
 export type ControlMessage = {
 	type: string,
     name: string,
     data: string
 }
+
+export async function switchToWolframView(file:TFile|null, serverAddress: string) {
+	const newLeaf = this.app.workspace.getLeaf(false)
+
+	if (file instanceof TFile) {
+		let wolframItemView = new WolframJSItemView(newLeaf, this.plugin)
+		await wolframItemView.setState({
+			serverAddress: serverAddress,
+			originalFilePath: file.path
+		},{
+			history:true
+		})
+
+		await newLeaf.open(wolframItemView as unknown as View)
+		await newLeaf.setViewState({
+			type: WOLFRAMJS_ITEM_VIEW_TYPE,
+			active:true,
+			state:{
+				originalFilePath: file.path,
+				serverAddress: serverAddress
+			}
+		})
+
+	}
+
+
+
+}
+
 export const SaveAs = async (iframe:HTMLIFrameElement|null) => {
 	const result = await ct.remote.dialog.showSaveDialog({
 		title: "Pick a wln file where you want to save",

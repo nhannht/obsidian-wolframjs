@@ -7,12 +7,9 @@ import {Abort, ChooseKernel, ClearOutputs, DeleteFocusedCell, Save, SaveAs, Togg
 
 export const WOLFRAMJS_ITEM_VIEW_TYPE = "wolframjs-item-view"
 
-export interface WolframjsItemViewPersistentState {
-
+export interface WolframjsItemViewPersistentState extends Record<string, unknown> {
 	serverAddress: string,
 	originalFilePath: string
-
-
 }
 
 export default class WolframJSItemView extends ItemView implements WolframjsItemViewPersistentState {
@@ -25,87 +22,38 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 	constructor(leaf: WorkspaceLeaf,
 				public plugin: ObsidianWolframJsPlugin,
 	) {
+		console.log("constructor call")
 		super(leaf)
 		this.actionButtons = {}
-		// this.serverAddress = this.plugin.settings.root_address
-		// this.originalFilePath = this.leaf.getViewState().data.originalFilePath
 
 
 	}
 
+	[key: string]: unknown;
 
-	getState(): Record<string, WolframjsItemViewPersistentState> {
-		// console.log("Get state trigger")
+
+	getState = (): WolframjsItemViewPersistentState => {
+
+		console.log("Get state trigger")
+		// console.log(this.leaf.getViewState())
 		return {
-			data: {
-				serverAddress: this.serverAddress,
-				originalFilePath: this.originalFilePath
-			}
+
+			serverAddress: this.serverAddress,
+			originalFilePath: this.originalFilePath
+
 		}
-	}
+	};
 
 
-	setState(state: WolframjsItemViewPersistentState, result: ViewStateResult): Promise<void> {
-		// console.log("Set state trigger")
-		if (state.serverAddress) {
-			this.serverAddress = state.serverAddress
-		} else {
-			this.serverAddress = this.plugin.settings.root_address
-		}
 
-		if (state.originalFilePath) {
-			this.originalFilePath = state.originalFilePath
-		} else {
-			this.originalFilePath = this.leaf.getViewState().data.originalFilePath
-		}
-
-		return super.setState(state, result);
-	}
-
-	 getDisplayText() {
-		return `View ${this.originalFilePath} as WolframJS`
-	}
-
-	getViewType(): string {
-		return WOLFRAMJS_ITEM_VIEW_TYPE;
-	}
-
-	getIcon(): IconName {
-		return WOLFRAMJS_ICON_ID;
-	}
+	async setState(state: WolframjsItemViewPersistentState, result: ViewStateResult): Promise<void> {
 
 
-	loadIframe(container: Element) {
-		this.iframe = container.createEl('iframe');
-		this.iframe.setAttribute('sandbox', 'allow-forms allow-presentation allow-same-origin allow-scripts')
-		const vault_path = (this.app.vault.adapter as FileSystemAdapter).getBasePath()
-		// console.log(vault_path)
-		const file = this.originalFilePath ? this.originalFilePath : ""
-		// console.log(file)
-		const fileAbsPath = path.resolve(vault_path, file)
-		// console.log(fileAbsPath)
-		const url = new URL(path.join("/iframe/", fileAbsPath), this.plugin.settings.root_address)
-		this.iframe.src = url.toString()
-		console.log(this.iframe.src)
-		// this.iframe.win.addEventListener('message', this.eventListener)
-	}
+		this.serverAddress = state["serverAddress"]
+
+		this.originalFilePath = state["originalFilePath"]
 
 
-	private async switchToNormalMode() {
-		if (this.originalFilePath != null) {
-			const file = this.app.vault.getFileByPath(this.originalFilePath)
-
-			if (file instanceof TFile) {
-				const leaf = this.app.workspace.getLeaf(false)
-				await leaf.openFile(file)
-			}
-		}
-
-	}
-
-
-	async onOpen() {
-		console.log(this.leaf.getViewState())
 		const container = this.containerEl.children[1];
 		// console.log(this.file)
 		try {
@@ -116,13 +64,82 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 			const error = container.createDiv({text: e.toString()})
 		}
 
-		await this.registerActionButtons()
-		this.app.workspace.requestSaveLayout()
+		// await this.registerActionButtons()
+
+		if (Object.keys(this.actionButtons).length === 0) {
+			await this.registerActionButtons()
+		}
+
+		return super.setState(state, result);
+	}
+
+
+	getDisplayText() {
+		console.log("Get display text trigger")
+		if (!this.originalFilePath) {
+			return "WolframJS"
+		} else {
+			return `${this.originalFilePath}`
+
+		}
+	}
+
+	getViewType(): string {
+		console.log("Get view type trigger")
+		return WOLFRAMJS_ITEM_VIEW_TYPE;
+	}
+
+	getIcon(): IconName {
+		console.log("Get icon trigger")
+		return WOLFRAMJS_ICON_ID;
+	}
+
+
+	loadIframe(container: Element) {
+		console.log("Load iframe trigger")
+		this.iframe = container.createEl('iframe');
+		this.iframe.setAttribute('sandbox', 'allow-forms allow-presentation allow-same-origin allow-scripts')
+		const vault_path = (this.app.vault.adapter as FileSystemAdapter).getBasePath()
+		// console.log(vault_path)
+		const file = this.originalFilePath ? this.originalFilePath : ""
+		console.log(file)
+		const fileAbsPath = path.resolve(vault_path, file)
+		// console.log(fileAbsPath)
+		const url = new URL(path.join("/iframe/", fileAbsPath), this.serverAddress)
+		this.iframe.src = url.toString()
+		console.log(this.iframe.src)
+		// this.iframe.win.addEventListener('message', this.eventListener)
+	}
+
+
+	private async switchToNormalMode() {
+
+		if (this.originalFilePath != null) {
+			const file = this.app.vault.getFileByPath(this.originalFilePath)
+
+			if (file instanceof TFile) {
+				const leaf = this.app.workspace.getLeaf(false)
+				await leaf.openFile(file)
+			}
+			const currentLeaf = this.leaf
+			this.leaf.detach()
+		}
+
+	}
+
+
+	async onOpen() {
+		await super.onOpen()
+
+		console.log("onOpen trigger")
+		// console.log(this.leaf.getViewState())
+		// this.app.workspace.requestSaveLayout()
 
 
 	}
 
 	async registerActionButtons() {
+
 		if (this.originalFilePath != null) {
 			const originalFile = this.app.vault.getFileByPath(this.originalFilePath)
 			if (originalFile instanceof TFile) {
@@ -156,6 +173,7 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 
 	async onClose() {
+		console.log("On close trigger")
 		// await super.onClose()
 		Object.entries(this.actionButtons).forEach(([k, v]) => {
 			v.remove()
