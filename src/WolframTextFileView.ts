@@ -4,7 +4,8 @@ import {WOLFRAMJS_ICON_ID} from "./icon";
 import {EditorView} from "@codemirror/view";
 import {EditorState, Extension} from "@codemirror/state";
 import WolframJSItemView from "./WolframJSItemView";
-import {switchToWolframView} from "./Action";
+
+import {switchToWolframView} from "./helper";
 
 export const WOLFRAMJS_TEXT_FILE_VIEW_TYPE = "wolframjs-text-file-view"
 

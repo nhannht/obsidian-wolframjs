@@ -3,7 +3,7 @@ import WolframTextFileView, {WOLFRAMJS_TEXT_FILE_VIEW_TYPE} from "./src/WolframT
 import {WolframJsSettings, WolframJsSettingsTab} from "./src/settings";
 import {WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG} from "./src/icon";
 import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./src/WolframJSItemView";
-import {switchToWolframView} from "./src/Action";
+import {createNewNotebook, switchToSetting, switchToWolframView} from "./src/helper";
 // Remember to rename these classes and interfaces!
 
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -63,10 +63,11 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 			}
 		}))
 
-
+		// this.addRibbonIcon(WOLFRAMJS_ICON_ID,"Create new Wolfram notebook",async ()=>{
+		// 	await createNewNotebook(this)
+		//
+		// })
 	}
-
-
 	//region Add some option to the menu of normal markdown view
 	// registerFileMenu() {
 	// 	this.registerEvent(this.app.workspace.on('file-menu', (menu,

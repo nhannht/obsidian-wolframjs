@@ -2,21 +2,32 @@ import {FileSystemAdapter, IconName, ItemView, TFile, ViewStateResult, Workspace
 import ObsidianWolframJsPlugin, {delay} from "../main";
 import {WOLFRAMJS_ICON_ID} from "./icon";
 import * as path from "path";
-import {Abort, ChooseKernel, ClearOutputs, DeleteFocusedCell, Save, SaveAs, ToggleFocusedCell} from "./Action";
+import {
+	Abort,
+	ChooseKernel,
+	ClearOutputs,
+	ControlMessage,
+	DeleteFocusedCell,
+	Save,
+	SaveAs,
+	ToggleFocusedCell
+} from "./Action";
 
 
 export const WOLFRAMJS_ITEM_VIEW_TYPE = "wolframjs-item-view"
 
 export interface WolframjsItemViewPersistentState extends Record<string, unknown> {
 	serverAddress: string,
-	originalFilePath: string
+	path: string;
+	typeOfPath: "file" | "raw" | string
 }
 
 export default class WolframJSItemView extends ItemView implements WolframjsItemViewPersistentState {
 	iframe: HTMLIFrameElement | null
 	actionButtons: Record<string, HTMLElement>
 	serverAddress: string
-	originalFilePath: string
+	path: string
+	typeOfPath: string
 
 
 	constructor(leaf: WorkspaceLeaf,
@@ -34,16 +45,16 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 	getState = (): WolframjsItemViewPersistentState => {
 
-		console.log("Get state trigger")
+		// console.log("Get state trigger")
 		// console.log(this.leaf.getViewState())
 		return {
 
 			serverAddress: this.serverAddress,
-			originalFilePath: this.originalFilePath
+			path: this.path,
+			typeOfPath: this.typeOfPath
 
 		}
 	};
-
 
 
 	async setState(state: WolframjsItemViewPersistentState, result: ViewStateResult): Promise<void> {
@@ -51,7 +62,9 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 		this.serverAddress = state["serverAddress"]
 
-		this.originalFilePath = state["originalFilePath"]
+		this.path = state["path"]
+
+		this.typeOfPath = state["typeOfPath"]
 
 
 		const container = this.containerEl.children[1];
@@ -75,22 +88,22 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 
 	getDisplayText() {
-		console.log("Get display text trigger")
-		if (!this.originalFilePath) {
+		// console.log("Get display text trigger")
+		if (!this.path) {
 			return "WolframJS"
 		} else {
-			return `${this.originalFilePath}`
+			return `${this.path}`
 
 		}
 	}
 
 	getViewType(): string {
-		console.log("Get view type trigger")
+		// console.log("Get view type trigger")
 		return WOLFRAMJS_ITEM_VIEW_TYPE;
 	}
 
 	getIcon(): IconName {
-		console.log("Get icon trigger")
+		// console.log("Get icon trigger")
 		return WOLFRAMJS_ICON_ID;
 	}
 
@@ -101,21 +114,28 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 		this.iframe.setAttribute('sandbox', 'allow-forms allow-presentation allow-same-origin allow-scripts')
 		const vault_path = (this.app.vault.adapter as FileSystemAdapter).getBasePath()
 		// console.log(vault_path)
-		const file = this.originalFilePath ? this.originalFilePath : ""
-		console.log(file)
-		const fileAbsPath = path.resolve(vault_path, file)
-		// console.log(fileAbsPath)
-		const url = new URL(path.join("/iframe/", fileAbsPath), this.serverAddress)
-		this.iframe.src = url.toString()
-		console.log(this.iframe.src)
+
+		if (this.typeOfPath === "file") {
+			const file = this.path ? this.path : ""
+			console.log(file)
+			const fileAbsPath = path.resolve(vault_path, file)
+			// console.log(fileAbsPath)
+			const url = new URL(path.join("/iframe/", fileAbsPath), this.serverAddress)
+			this.iframe.src = url.toString()
+
+		} else if (this.typeOfPath === "raw") {
+			const url = new URL(this.path, this.serverAddress)
+			this.iframe.src = url.toString()
+		}
+
 		// this.iframe.win.addEventListener('message', this.eventListener)
 	}
 
 
 	private async switchToNormalMode() {
 
-		if (this.originalFilePath != null) {
-			const file = this.app.vault.getFileByPath(this.originalFilePath)
+		if (this.path != null) {
+			const file = this.app.vault.getFileByPath(this.path)
 
 			if (file instanceof TFile) {
 				const leaf = this.app.workspace.getLeaf(false)
@@ -140,8 +160,8 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 	async registerActionButtons() {
 
-		if (this.originalFilePath != null) {
-			const originalFile = this.app.vault.getFileByPath(this.originalFilePath)
+		if (this.path != null) {
+			const originalFile = this.app.vault.getFileByPath(this.path)
 			if (originalFile instanceof TFile) {
 				const ext = originalFile.extension
 				// console.log(ext)
@@ -166,6 +186,19 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 				this.actionButtons["Go back to origin"] = this.addAction("arrow-left",
 					"Go back to the original markdown file - remember to save the changed",
 					() => this.switchToNormalMode())
+				// this.actionButtons["New notebook"] = this.addAction("arrow-left",
+				// 	"Create new notebook",
+				// 	() => {
+				// 		const message = {
+				// 			'type': 'controls',
+				// 			'name': 'newnotebook',
+				//
+				// 		}
+				// 		if (this.iframe) {
+				// 			this.iframe.contentWindow?.postMessage(message, "*")
+				// 		}
+				// 	}
+				// )
 			}
 		}
 

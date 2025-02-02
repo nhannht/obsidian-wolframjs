@@ -1,8 +1,8 @@
 {
 	"id": "obsidian-wolframjs",
 	"name": "Obsidian WolframJS",
-	"version": "1.0.3",
-	"minAppVersion": "1.0.0",
+	"version": "1.0.4",
+	"minAppVersion": "1.0.4",
 	"description": "Obsidian client for WolframJS ",
 	"author": "Nhan The Conqueror",
 	"authorUrl": "https://github.com/nhannht",
