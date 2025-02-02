@@ -71,8 +71,9 @@ export default class WolframTextFileView extends TextFileView {
 		if (this.file) {
 			this.actionButtons["Switch to wolfram view"] = this.addAction(WOLFRAMJS_ICON_ID, "Switch to WolframJs mode", async () => {
 				// this.leaf.detach()
+				let currentLeaf = this.leaf
 
-				await switchToWolframView(this.file,this.plugin.settings.root_address)
+				await switchToWolframView(this.file,this.plugin.settings.root_address,currentLeaf)
 			})
 		}
 	}

@@ -1,6 +1,6 @@
 import ObsidianWolframJsPlugin from "../main";
-import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./WolframJSItemView";
-import {FileSystemAdapter, TFile, View} from "obsidian";
+import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE, WolframjsItemViewPersistentState} from "./WolframJSItemView";
+import {FileSystemAdapter, TFile, View, WorkspaceLeaf} from "obsidian";
 import {ControlMessage} from "./Action";
 
 export const createNewNotebook = async (plugin:ObsidianWolframJsPlugin)=>{
@@ -48,28 +48,44 @@ export const switchToSetting = async (plugin: ObsidianWolframJsPlugin) => {
 	})
 }
 
-export async function switchToWolframView(file: TFile | null, serverAddress: string) {
+export async function switchToWolframView(file: TFile | null, serverAddress: string,leaf:WorkspaceLeaf | undefined) {
     const newLeaf = this.app.workspace.getLeaf(false)
 
     if (file instanceof TFile) {
         let wolframItemView = new WolframJSItemView(newLeaf, this.plugin)
-        await wolframItemView.setState({
-            serverAddress: serverAddress,
-            path: file.path,
-            typeOfPath: "file"
-        }, {
-            history: true
-        })
 
-        await newLeaf.open(wolframItemView as unknown as View)
-        await newLeaf.setViewState({
-            type: WOLFRAMJS_ITEM_VIEW_TYPE,
-            active: true,
-            state: {
-                originalFilePath: file.path,
-                serverAddress: serverAddress
-            }
-        })
+        // await wolframItemView.setState({
+        //     serverAddress: serverAddress,
+        //     path: file.path,
+        //     typeOfPath: "file"
+        // }, {
+        //     history: true
+        // })
+		//
+        // await newLeaf.open(wolframItemView as unknown as View)
+        // await newLeaf.setViewState({
+        //     type: WOLFRAMJS_ITEM_VIEW_TYPE,
+        //     active: true,
+        //     state: {
+        //         path: file.path,
+        //         serverAddress: serverAddress,
+		// 		typeOfPath: 'file'
+		//
+        //     } as WolframjsItemViewPersistentState
+        // })
+
+		if (leaf){
+			await leaf.setViewState({
+				type: WOLFRAMJS_ITEM_VIEW_TYPE,
+				active: true,
+				state: {
+					path: file.path,
+					serverAddress: serverAddress,
+					typeOfPath: 'file'
+
+				} as WolframjsItemViewPersistentState
+			})
+		}
 
     }
 

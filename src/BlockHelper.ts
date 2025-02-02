@@ -12,9 +12,10 @@ export default class BlockHelper {
 
 		})
 		const result = JSON.parse(res) as string;
+		// console.log(result)
 		let tempSettings = structuredClone(this.plugin.settings) as WolframJsSettings
-		tempSettings.extensions = decodeURIComponent(result)
 		console.log(tempSettings)
+		tempSettings.javascript = decodeURIComponent(result)
 		await this.plugin.saveData(tempSettings)
 	}
 
@@ -38,7 +39,7 @@ export default class BlockHelper {
 		await this.plugin.saveData(tempSettings)
 	}
 
-	setUpServerAPI = () => {
+	setUpServerAPI = async () => {
 		console.log("Settup server api")
 		// @ts-ignore
 		const getObject = async (kernel: any, uid: any) => {
@@ -130,26 +131,31 @@ export default class BlockHelper {
 		this.plugin.registerMarkdownCodeBlockProcessor("wolf", async (src, el, ctx) => {
 
 			await delay(300)
-			const resultsDiv = el.createDiv()
+
 			el.createEl("script", {
 				attr: {
 					"type": "module",
 				},
-				text: this.plugin.settings.extensions
+				text: this.plugin.settings.javascript,
+
+				cls:"external-js-wolframjs"
+
 			})
+
 			this.plugin.settings.styles.forEach(style => {
 				const tag = el.doc.head.createEl("style", {
 					text: style,
 				})
 
 			})
+			await this.setUpServerAPI()
 
 			let transaction = await request({
 				url: 'http://127.0.0.1:20560/api/transactions/create/',
 				method: 'POST',
 				body: JSON.stringify({
 					'Kernel': this.plugin.targetKernel,
-					'Data': '1+1'
+					'Data': src
 				})
 			});
 			transaction = JSON.parse(transaction);

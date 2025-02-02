@@ -70,7 +70,9 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 		const container = this.containerEl.children[1];
 		// console.log(this.file)
 		try {
-			this.loadIframe(container)
+			if (!this.iframe){
+				this.loadIframe(container)
+			}
 
 		} catch (e) {
 			console.error(e);
@@ -133,15 +135,16 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 
 	private async switchToNormalMode() {
+		console.log(this.path)
 
 		if (this.path != null) {
 			const file = this.app.vault.getFileByPath(this.path)
 
-			if (file instanceof TFile) {
+			if (file) {
 				const leaf = this.app.workspace.getLeaf(false)
 				await leaf.openFile(file)
 			}
-			const currentLeaf = this.leaf
+
 			this.leaf.detach()
 		}
 
@@ -162,7 +165,7 @@ export default class WolframJSItemView extends ItemView implements WolframjsItem
 
 		if (this.path != null) {
 			const originalFile = this.app.vault.getFileByPath(this.path)
-			if (originalFile instanceof TFile) {
+			if (originalFile) {
 				const ext = originalFile.extension
 				// console.log(ext)
 				// markdown  and nb file can eval but cannot save directly, save via saveas

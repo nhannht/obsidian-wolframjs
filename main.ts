@@ -4,6 +4,7 @@ import {WolframJsSettings, WolframJsSettingsTab} from "./src/settings";
 import {WOLFRAMJS_ICON_ID, WOLFRAMJS_ICON_SVG} from "./src/icon";
 import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./src/WolframJSItemView";
 import {createNewNotebook, switchToSetting, switchToWolframView} from "./src/helper";
+import BlockHelper from "./src/BlockHelper";
 // Remember to rename these classes and interfaces!
 
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -12,24 +13,26 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 	settings: WolframJsSettings;
 	DEFAULT_SETTTINGS: WolframJsSettings = {
 		root_address: "http://127.0.0.1:20560",
-		extensions: "",
+		javascript: "",
 		styles: []
 	}
 	wolframButton: HTMLElement | null;
 	targetKernel: string | null = null;
 
-	// blockHelper = new BlockHelper(this)
+	blockHelper = new BlockHelper(this)
 
 
 	async onload() {
+
 		// inlineImportDebug()
 		//region Load settings
+		await this.loadSettings();
 		// const kernel = await this.blockHelper.findKernel();
 		// this.targetKernel = kernel;
-		// this.blockHelper.setUpServerAPI()
-		await this.loadSettings();
 		// await this.blockHelper.fetchBundleJs()
 		// await this.blockHelper.fetchStyle()
+		// await this.loadSettings()
+
 		// await this.blockHelper.registerWoffBlock()
 		//endregion
 		// This creates an icon in the left ribbon.
@@ -92,10 +95,10 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 	//region Function that handler to switch to WolframView of current file
 	switchToWolframView = async () => {
-		const newLeaf = this.app.workspace.getLeaf(false)
 
 		const currentFile = this.app.workspace.getActiveFile()
-		await switchToWolframView(currentFile,this.settings.root_address)
+		let currentLeaf = this.app.workspace.getActiveViewOfType(MarkdownView)?.leaf
+		await switchToWolframView(currentFile,this.settings.root_address,currentLeaf)
 		// await this.app.workspace.vi(newLeaf)
 
 		// await this.switchToWolframView(activeView.leaf)
