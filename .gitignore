@@ -29,3 +29,6 @@ data.json
 /api.http
 /api.mjs
 /try_object_api.html
+/customJs/bundle.js
+/customScript.mjs
+/customJs/out.js

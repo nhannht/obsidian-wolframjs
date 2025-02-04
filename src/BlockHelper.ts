@@ -4,7 +4,9 @@ import {request} from "obsidian";
 import {WolframJsSettings} from "./settings";
 
 export default class BlockHelper {
-	constructor(public plugin:ObsidianWolframJsPlugin) {}
+	constructor(public plugin: ObsidianWolframJsPlugin) {
+	}
+
 	fetchBundleJs = async () => {
 		const res = await request({
 			url: "http://127.0.0.1:20560/api/extensions/bundle/minjs/",
@@ -14,9 +16,11 @@ export default class BlockHelper {
 		const result = JSON.parse(res) as string;
 		// console.log(result)
 		let tempSettings = structuredClone(this.plugin.settings) as WolframJsSettings
-		console.log(tempSettings)
 		tempSettings.javascript = decodeURIComponent(result)
+		console.log(tempSettings)
 		await this.plugin.saveData(tempSettings)
+		// await this.plugin.loadSettings()
+		// console.log(this.plugin.settings)
 	}
 
 	fetchStyle = async () => {
@@ -41,12 +45,13 @@ export default class BlockHelper {
 
 	setUpServerAPI = async () => {
 		console.log("Settup server api")
+
 		// @ts-ignore
 		const getObject = async (kernel: any, uid: any) => {
 			console.log("trigger getObject")
 			let r = await fetch('http://127.0.0.1:20560/api/frontendobjects/get/', {
-				method:'POST',
-				body:JSON.stringify({
+				method: 'POST',
+				body: JSON.stringify({
 					'UId': uid,
 					"Kernel": kernel
 				})
@@ -54,14 +59,15 @@ export default class BlockHelper {
 
 			r = await r.json();
 
+
 			if (r.Resolved == true) {
+				console.log("r is resolved")
 				return JSON.parse(r.Data);
 			}
 
 			await delay(300);
 
 			return await getObject(kernel, uid)
-
 
 
 		}
@@ -126,29 +132,35 @@ export default class BlockHelper {
 
 	}
 
+	loadCustomScriptAndStyle = async () => {
+		// console.log("load custom js")
+		// await this.plugin.loadSettings()
+		// console.log(this.plugin.settings)
+		this.plugin.wolframJavascript = document.createElement("script")
+		// s.addClass("external-wolframjs-script")
+		// console.log(this.plugin.settings.javascript)
+		this.plugin.wolframJavascript.textContent = this.plugin.settings.javascript
+		this.plugin.wolframJavascript.id = "wolframjs-external-script"
+		this.plugin.wolframJavascript.setAttribute("type", "module")
 
-	registerWoffBlock = async ()=>{
+		document.documentElement.appendChild(this.plugin.wolframJavascript)
+
+		this.plugin.settings.styles.forEach((s, i) => {
+			let css = document.createElement("style")
+			css.textContent = s
+			css.addClass("wolfram-external-css")
+			this.plugin.wolframCss.push(css)
+			document.head.appendChild(css)
+
+		})
+
+
+	}
+
+
+	registerWoffBlock = async () => {
 		this.plugin.registerMarkdownCodeBlockProcessor("wolf", async (src, el, ctx) => {
-
 			await delay(300)
-
-			el.createEl("script", {
-				attr: {
-					"type": "module",
-				},
-				text: this.plugin.settings.javascript,
-
-				cls:"external-js-wolframjs"
-
-			})
-
-			this.plugin.settings.styles.forEach(style => {
-				const tag = el.doc.head.createEl("style", {
-					text: style,
-				})
-
-			})
-			await this.setUpServerAPI()
 
 			let transaction = await request({
 				url: 'http://127.0.0.1:20560/api/transactions/create/',
@@ -161,7 +173,7 @@ export default class BlockHelper {
 			transaction = JSON.parse(transaction);
 			if (this.plugin.targetKernel != null) {
 				const results = await this.getResult(this.plugin.targetKernel, transaction);
-			console.log(results);
+				console.log(results);
 				results.forEach((data) => {
 					console.log(data)
 
@@ -191,8 +203,6 @@ export default class BlockHelper {
 		})
 
 	}
-
-
 
 
 }

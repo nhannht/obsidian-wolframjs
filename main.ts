@@ -6,6 +6,8 @@ import WolframJSItemView, {WOLFRAMJS_ITEM_VIEW_TYPE} from "./src/WolframJSItemVi
 import {createNewNotebook, switchToSetting, switchToWolframView} from "./src/helper";
 import BlockHelper from "./src/BlockHelper";
 // Remember to rename these classes and interfaces!
+// import customScript from "./customScript.mjs"
+// import  customScript from "./customJs/out.js"
 
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -20,20 +22,28 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 	targetKernel: string | null = null;
 
 	blockHelper = new BlockHelper(this)
+	wolframJavascript: HTMLScriptElement|null;
+	wolframCss:HTMLStyleElement[] = [];
 
 
 	async onload() {
-
 		// inlineImportDebug()
 		//region Load settings
 		await this.loadSettings();
-		// const kernel = await this.blockHelper.findKernel();
-		// this.targetKernel = kernel;
-		// await this.blockHelper.fetchBundleJs()
-		// await this.blockHelper.fetchStyle()
+		const kernel = await this.blockHelper.findKernel();
+		this.targetKernel = kernel;
+		// await customScript()
+		await this.blockHelper.fetchBundleJs()
+		await this.blockHelper.fetchStyle()
+		await this.loadSettings()
+		console.log(this.settings)
+
+		await this.blockHelper.loadCustomScriptAndStyle()
+		await delay(1000)
+		await this.blockHelper.setUpServerAPI()
 		// await this.loadSettings()
 
-		// await this.blockHelper.registerWoffBlock()
+		await this.blockHelper.registerWoffBlock()
 		//endregion
 		// This creates an icon in the left ribbon.
 
@@ -109,6 +119,13 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(WOLFRAMJS_TEXT_FILE_VIEW_TYPE)
+		if (this.wolframJavascript){
+			this.wolframJavascript.remove()
+		}
+		if (this.wolframCss.length > 0){
+			this.wolframCss.forEach(e=>e.remove())
+		}
+		this.wolframCss = []
 
 	}
 
