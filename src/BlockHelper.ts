@@ -8,19 +8,26 @@ export default class BlockHelper {
 	}
 
 	fetchBundleJs = async () => {
-		const res = await request({
-			url: "http://127.0.0.1:20560/api/extensions/bundle/minjs/",
-			method: "POST",
+		let listExts = await request('http://127.0.0.1:20560/api/extensions/list/', { method: 'POST' });
+		listExts = JSON.parse(listExts) as Array[any];
 
+        listExts = listExts.map((e) => e.name);
+
+		const res = await request({
+			url: "http://127.0.0.1:20560/api/extensions/get/minjs/",
+			method: "POST",
+			body: JSON.stringify(listExts)
 		})
-		const result = JSON.parse(res) as string;
+
+		const result = JSON.parse(res) as Array[String]; 
+
 		// console.log(result)
 		let tempSettings = structuredClone(this.plugin.settings) as WolframJsSettings
-		tempSettings.javascript = decodeURIComponent(result)
+		tempSettings.javascript = result.map(decodeURIComponent);
 		console.log(tempSettings)
 		await this.plugin.saveData(tempSettings)
-		// await this.plugin.loadSettings()
-		// console.log(this.plugin.settings)
+		//await this.plugin.loadSettings()
+		// console.log(this.plugin.settings) 
 	}
 
 	fetchStyle = async () => {
@@ -43,12 +50,23 @@ export default class BlockHelper {
 		await this.plugin.saveData(tempSettings)
 	}
 
-	setUpServerAPI = async () => {
+	setUpServerAPI = async (targetKernel) => {
 		console.log("Settup server api")
+
+		this.targetKernel = targetKernel;
+		const parentSelf = this;
 
 		// @ts-ignore
 		const getObject = async (kernel: any, uid: any) => {
+			if (!kernel) {
+				//implement sort of caching.
+				//probably one can store data either inside a cell (might be a bit too big)
+				//or use fflate library to compress / decompress the resulting JSON expression
+				//so that it can work without running WLJS too
+			}
+
 			console.log("trigger getObject")
+			//console.log(kernel);
 			let r = await fetch('http://127.0.0.1:20560/api/frontendobjects/get/', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -72,14 +90,13 @@ export default class BlockHelper {
 
 		}
 
-		//implementation of get method depends on execution env
 		window.ObjectStorage.prototype.get = function () {
 			console.log("Window object storage triggered")
 			if (this.cached) return this.cache;
 			const self = this;
 			const promise = new Deferred();
 
-			getObject(this.targetKernel, self.uid).then((result: any) => {
+			getObject(parentSelf.targetKernel, self.uid).then((result: any) => {
 				self.cache = result;
 				promise.resolve(self.cache);
 			}, (rejected) => {
@@ -89,6 +106,8 @@ export default class BlockHelper {
 
 			return promise.promise;
 		}
+
+
 	}
 
 	findKernel = async (): Promise<string> => {
@@ -121,14 +140,14 @@ export default class BlockHelper {
 
 
 		result = JSON.parse(result);
-		console.log(result);
+		//console.log(result.State);
 
 		if (result.State !== 'Idle') {
 			result = await this.getResult(kernel, transaction);
 		}
 
-
-		return result.Result;
+		//console.warn(result);
+		return result;
 
 	}
 
@@ -136,14 +155,15 @@ export default class BlockHelper {
 		// console.log("load custom js")
 		// await this.plugin.loadSettings()
 		// console.log(this.plugin.settings)
-		this.plugin.wolframJavascript = document.createElement("script")
-		// s.addClass("external-wolframjs-script")
-		// console.log(this.plugin.settings.javascript)
-		this.plugin.wolframJavascript.textContent = this.plugin.settings.javascript
-		this.plugin.wolframJavascript.id = "wolframjs-external-script"
-		this.plugin.wolframJavascript.setAttribute("type", "module")
+		const wolframJavascriptModules = [] as Array[HTMLElement];
 
-		document.documentElement.appendChild(this.plugin.wolframJavascript)
+		this.plugin.wolframJavascript = this.plugin.settings.javascript.map(element => {
+			const htmlElement = document.createElement("script");
+			htmlElement.type = "module";
+			htmlElement.innerHTML = element;
+			document.documentElement.appendChild(htmlElement);
+			return htmlElement;
+		});
 
 		this.plugin.settings.styles.forEach((s, i) => {
 			let css = document.createElement("style")
@@ -172,7 +192,7 @@ export default class BlockHelper {
 			});
 			transaction = JSON.parse(transaction);
 			if (this.plugin.targetKernel != null) {
-				const results = await this.getResult(this.plugin.targetKernel, transaction);
+				const results = (await this.getResult(this.plugin.targetKernel, transaction)).Result;
 				console.log(results);
 				results.forEach((data) => {
 					console.log(data)
@@ -188,11 +208,9 @@ export default class BlockHelper {
 					console.log(origin)
 
 					const cell = new window.SupportedCells[display].view(origin, data.Data);
-					el.appendChild(cell)
 
 
-					//to remove use
-
+					//to remove use, otherwise it might cause a memory leak
 					//cell.dispose()
 				})
 			}

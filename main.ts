@@ -40,8 +40,8 @@ export default class ObsidianWolframJsPlugin extends Plugin {
 
 		await this.blockHelper.loadCustomScriptAndStyle()
 		await delay(1000)
-		await this.blockHelper.setUpServerAPI()
-		// await this.loadSettings()
+		
+		await this.blockHelper.setUpServerAPI(this.targetKernel);
 
 		await this.blockHelper.registerWoffBlock()
 		//endregion
